@@ -150,8 +150,8 @@ const EditProfile = ({ user }) => {
                   <textarea 
                     className="textarea textarea-bordered" 
                     onChange={(e) => setAbout(e.target.value)}
+                    value={about}
                   >
-                    {about}
                   </textarea>
                 </label>
               </div>
