@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { createSocketConnection } from "../utils/socket";
 import { useSelector } from "react-redux";
 import { BASE_URL } from "../utils/constants";
+import { formatDistanceToNow } from "date-fns";
 import axios from "axios";
 
 
@@ -19,10 +20,11 @@ const Chat = () => {
         });
 
         const chatMessages = chat?.data?.messages.map((msg) => {
-            const { senderId, text } = msg;
+            const { senderId, text, updatedAt } = msg;
             return {
                 firstName: senderId?.firstName,
                 lastName: senderId?.lastName,
+                time: updatedAt,
                 text,
             };
         });
@@ -79,7 +81,10 @@ const Chat = () => {
                             >
                             <div className="chat-header">
                                 {`${msg.firstName}  ${msg.lastName}`}
-                                <time className="text-xs opacity-50"> 2 hours ago</time>
+                                <time className="text-xs opacity-50">
+                                    {" "}
+                                    {msg.time ? formatDistanceToNow(new Date(msg.time), { addSuffix: true }) : "Just now"}
+                                </time>
                             </div>
                             <div className="chat-bubble">{msg.text}</div>
                             <div className="chat-footer opacity-50">Seen</div>
