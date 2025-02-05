@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { createSocketConnection } from "../utils/socket";
 import { useSelector } from "react-redux";
@@ -9,8 +9,10 @@ import axios from "axios";
 
 const Chat = () => {
     const { targetUserId } = useParams();
+    const chatEndRef = useRef(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+    const [targetFullName, setTargetFullName] = useState("");
     const user = useSelector((store) => store.user);
     const userId = user?._id;
 
@@ -19,7 +21,9 @@ const Chat = () => {
             withCredentials: true,
         });
 
-        const chatMessages = chat?.data?.messages.map((msg) => {
+        setTargetFullName(chat?.data?.targetUser);
+
+        const chatMessages = chat?.data?.chat?.messages.map((msg) => {
             const { senderId, text, updatedAt } = msg;
             return {
                 firstName: senderId?.firstName,
@@ -66,9 +70,23 @@ const Chat = () => {
         setNewMessage("");
     };
 
+    const scrollToBottom = () => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+          sendMessage();
+        }
+    };
+
     return (
         <div className="w-3/4 mx-auto border border-gray-600 m-5 h-[70vh] flex flex-col">
-            <h1 className="p-5 border-b border-gray-600">Chat</h1>
+            <h1 className="p-5 border-b border-gray-600">{targetFullName}</h1>
             <div className="flex-1 overflow-scroll p-5">
                 {messages.map((msg, index) => {
                     return (
@@ -91,12 +109,14 @@ const Chat = () => {
                         </div>
                     );
                 })}
+                <div ref={chatEndRef}></div>
             </div>
 
             <div className="p-5 border-t border-gray-600 flex items-center gap-2">
                 <input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     className="flex-1 border border-gray-500 text-white rounded p-2"
                 ></input>
 
