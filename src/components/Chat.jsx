@@ -4,6 +4,7 @@ import { createSocketConnection } from "../utils/socket";
 import { useSelector } from "react-redux";
 import { BASE_URL } from "../utils/constants";
 import { formatDistanceToNow } from "date-fns";
+import useOnlineStatus from "./hooks/useOnlineStatus";
 import axios from "axios";
 
 
@@ -15,15 +16,24 @@ const Chat = () => {
     const [targetFullName, setTargetFullName] = useState("");
     const user = useSelector((store) => store.user);
     const userId = user?._id;
+    const { isUserOnline, loading } = useOnlineStatus();
+    const socket = useRef(null);
+    const [page, setPage] = useState(1);
+
+    if (!socket.current) {
+        socket.current = createSocketConnection();
+    }
+    socket.current.emit('userConnected', userId);
 
     const fetchChatMessages = async () => {
-        const chat = await axios.get(BASE_URL + "/chat/" + targetUserId, {
+        console.log("fettch");
+        const chat = await axios.get(`${BASE_URL}/chat/${targetUserId}?page=${page}&limit=10`, {
             withCredentials: true,
         });
-
+        console.log(chat);
         setTargetFullName(chat?.data?.targetUser);
 
-        const chatMessages = chat?.data?.chat?.messages.map((msg) => {
+        const chatMessages = chat?.data?.chat.map((msg) => {
             const { senderId, text, updatedAt } = msg;
             return {
                 firstName: senderId?.firstName,
@@ -32,7 +42,15 @@ const Chat = () => {
                 text,
             };
         });
-        setMessages(chatMessages);
+        // setMessages(chatMessages);
+        setMessages((prev) => [...chatMessages, ...prev]);
+    };
+
+    // Load more messages when scrolling to top
+    const handleScroll = (e) => {
+        if (e.target.scrollTop === 0) {
+            setPage((prev) => prev + 1); // Load next page
+        }
     };
 
     useEffect(() => {
@@ -42,25 +60,35 @@ const Chat = () => {
     useEffect(() => {
         if (!userId) return;
 
-        const socket = createSocketConnection();
-        socket.emit("joinChat", {
+        // const socket = createSocketConnection();
+        if (!socket.current) {
+            socket.current = createSocketConnection();
+        }
+
+        socket.current.emit("joinChat", {
             firstName: user.firstName,
             userId,
             targetUserId,
         });
 
-        socket.on("messageReceived", ({ firstName, lastName, text }) => {
+        socket.current.on("messageReceived", ({ firstName, lastName, text }) => {
             setMessages((messages) => [...messages, { firstName, lastName, text }]);
         });
 
+        socket.current.emit('userConnected', userId);
+
         return () => {
-            socket.disconnect();
+            // socket.disconnect();
+            socket.current.disconnect();
+            socket.current = null;
         };
     }, [userId, targetUserId]);
 
     const sendMessage = () => {
-        const socket = createSocketConnection();
-        socket.emit("sendMessage", {
+        if (!socket.current) {
+            socket.current = createSocketConnection();
+        }
+        socket.current.emit("sendMessage", {
             firstName: user.firstName,
             lastName: user.lastName,
             userId,
@@ -86,8 +114,11 @@ const Chat = () => {
 
     return (
         <div className="w-3/4 mx-auto border border-gray-600 m-5 h-[70vh] flex flex-col">
-            <h1 className="p-5 border-b border-gray-600">{targetFullName}</h1>
-            <div className="flex-1 overflow-scroll p-5">
+            <h1 className="p-5 border-b border-gray-600">
+                {targetFullName}
+                {!loading && isUserOnline(targetUserId) ? ' 🟢 Online' : ' 🔴 Offline'}
+            </h1>
+            <div className="flex-1 overflow-scroll p-5" onScroll={handleScroll}>
                 {messages.map((msg, index) => {
                     return (
                         <div
