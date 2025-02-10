@@ -36,7 +36,7 @@ const Connections = () => {
           connection;
 
         return (
-          <div key={_id} className=" flex m-4 p-4 rounded-lg bg-base-300 w-1/2 mx-auto">
+          <div key={_id} className=" flex items-center gap-4 p-4 rounded-lg bg-base-300 w-1/2 mx-auto">
             <div>
               <img
                 alt="photo"
@@ -44,12 +44,12 @@ const Connections = () => {
                 src={photoUrl}
               />
             </div>
-            <div className="text-left mx-4 ">
-              <h2 className="font-bold text-xl">
+            <div className="flex-grow min-w-0">
+              <h2 className="font-bold text-xl truncate">
                 {firstName + " " + lastName}
               </h2>
               {age && gender && <p>{age + ", " + gender}</p>}
-              <p>{about}</p>
+              <p className="text-sm text-gray-400 truncate" >{about}</p>
             </div>
             <Link to={"/chat/" + _id}>
               <button className="btn btn-primary">Chat</button>
