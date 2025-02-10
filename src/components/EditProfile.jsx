@@ -15,6 +15,8 @@ const EditProfile = ({ user }) => {
   const [age, setAge] = useState(user.age || '');
   const [gender, setGender] = useState(user.gender);
   const [about, setAbout] = useState(user.about || '');
+  const [skills, setSkills] = useState(user.skills || []);
+  const [newSkill, setNewSkill] = useState("");
   const [error, setError] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,6 +40,18 @@ const EditProfile = ({ user }) => {
     setDropdownOpen(false);
   };
 
+  const addSkill = (e) => {
+    e.preventDefault();
+    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
+      setSkills([...skills, newSkill.trim()]);
+    }
+    setNewSkill("");
+  };
+
+  const removeSkill = (skillToRemove) => {
+    setSkills(skills.filter(skill => skill !== skillToRemove));
+  };
+
   const saveProfile = async () => {
     setError("");
     try {
@@ -49,6 +63,7 @@ const EditProfile = ({ user }) => {
           age,
           gender,
           about,
+          skills
         },
         { withCredentials: true }
       );
@@ -154,6 +169,27 @@ const EditProfile = ({ user }) => {
                   >
                   </textarea>
                 </label>
+                <label className="form-control w-full max-w-xs my-2">
+                  <div className="label">
+                    <span className="label-text">Skills:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((skill, index) => (
+                      <div key={index} className="badge badge-primary flex items-center gap-1">
+                        {skill}
+                        <button className="ml-1 text-white" onClick={() => removeSkill(skill)}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={newSkill}
+                    className="input input-bordered w-full max-w-xs mt-2"
+                    placeholder="Type new skill and press Enter to add"
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addSkill(e)}
+                  />
+                </label>
               </div>
               <p className="text-red-500">{error}</p>
               <div className="card-actions justify-center m-2">
@@ -165,7 +201,7 @@ const EditProfile = ({ user }) => {
           </div>
         </div>
         <UserCard
-          user={{ firstName, lastName, photoUrl, age, gender, about }}
+          user={{ firstName, lastName, photoUrl, age, gender, about, skills }}
         />
       </div>
       {showToast && (
