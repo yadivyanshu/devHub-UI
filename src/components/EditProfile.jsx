@@ -4,6 +4,7 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
+import {generateAboutMe} from "../utils/generateAbout";
 
 const EditProfile = ({ user }) => {
   const dispatch = useDispatch();
@@ -75,6 +76,18 @@ const EditProfile = ({ user }) => {
     } catch (err) {
       setError(err.response.data);
     }
+  };
+
+  const handleGenerateAboutMe = async () => {
+    const userDetails = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      age: user.age || '',
+      gender: user.gender,
+      skills: user.skills || []
+    };
+    const aiGeneratedText = await generateAboutMe(userDetails, about);
+    setAbout(aiGeneratedText);
   };
 
   return (
@@ -159,8 +172,9 @@ const EditProfile = ({ user }) => {
                 </div>
                </label>
                 <label className="form-control w-full max-w-xs my-2">
-                  <div className="label">
+                  <div className="label flex items-center justify-between">
                     <span className="label-text">About:</span>
+                    <button className="btn btn-secondary btn-xs" onClick={handleGenerateAboutMe}>AI </button>
                   </div>
                   <textarea 
                     className="textarea textarea-bordered" 
